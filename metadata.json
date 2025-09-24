@@ -1,0 +1,5 @@
+{
+  "name": "Es Teh Jumbo POS",
+  "description": "A simple Point of Sale (POS) application for an Es Teh Jumbo business, enabling product management, transaction processing, and sales reporting.",
+  "requestFramePermissions": []
+}
