@@ -252,7 +252,7 @@ const POSView: React.FC<POSViewProps> = ({ products, onTransactionComplete, curr
   }, [cart, total, currentUser, onTransactionComplete]);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6 h-[calc(100vh-128px)]">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6 lg:h-[calc(100vh-128px)]">
       <div className="lg:col-span-2 h-full overflow-y-auto pr-2">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {activeProducts.map(product => (
