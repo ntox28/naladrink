@@ -72,7 +72,7 @@ const Cart: React.FC<{
     }
 
     return (
-        <div className="bg-white rounded-xl shadow-lg p-6 flex flex-col h-full">
+        <div className="bg-white rounded-xl shadow-lg p-6 flex flex-col lg:h-full">
             <h2 className="text-2xl font-bold text-amber-900 border-b pb-4 mb-4">Keranjang</h2>
             {cart.length === 0 ? (
                 <div className="flex-grow flex items-center justify-center text-gray-500">
@@ -252,8 +252,8 @@ const POSView: React.FC<POSViewProps> = ({ products, onTransactionComplete, curr
   }, [cart, total, currentUser, onTransactionComplete]);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6 lg:h-[calc(100vh-128px)]">
-      <div className="lg:col-span-2 h-full overflow-y-auto pr-2">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6 lg:h-full">
+      <div className="lg:col-span-2 lg:h-full overflow-y-auto pr-2">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {activeProducts.map(product => (
                 <ProductCard key={product.id} product={product} onAddToCart={handleAddToCart} />
@@ -266,7 +266,7 @@ const POSView: React.FC<POSViewProps> = ({ products, onTransactionComplete, curr
             )}
         </div>
       </div>
-      <div className="lg:col-span-1 h-full">
+      <div className="lg:col-span-1 lg:h-full">
         <Cart 
             cart={cart}
             updateQuantity={handleUpdateQuantity}
