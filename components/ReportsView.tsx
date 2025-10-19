@@ -1,5 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Transaction, Product, Expense } from '../types';
+
+// Let TypeScript know Chart exists globally
+declare var Chart: any;
 
 interface ReportsViewProps {
   transactions: Transaction[];
@@ -18,6 +21,9 @@ const ReportsView: React.FC<ReportsViewProps> = ({ transactions, products, expen
   const [viewMode, setViewMode] = useState<'daily' | 'monthly'>('daily');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]); // YYYY-MM-DD
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
+
+  const chartRef = useRef<HTMLCanvasElement>(null);
+  const chartInstanceRef = useRef<any>(null); // To hold the chart instance
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter(t => {
@@ -79,6 +85,116 @@ const ReportsView: React.FC<ReportsViewProps> = ({ transactions, products, expen
         .slice(0, 5);
 
   }, [filteredTransactions, products]);
+  
+  // Chart rendering effect
+  useEffect(() => {
+    if (!chartRef.current) return;
+
+    // Destroy previous chart instance
+    if (chartInstanceRef.current) {
+        chartInstanceRef.current.destroy();
+    }
+    
+    const ctx = chartRef.current.getContext('2d');
+    if (!ctx) return;
+
+    let labels: string[] = [];
+    let salesData: number[] = [];
+    let expensesData: number[] = [];
+
+    if (viewMode === 'daily') {
+        labels = Array.from({ length: 24 }, (_, i) => `${i.toString().padStart(2, '0')}:00`);
+        salesData = Array(24).fill(0);
+        expensesData = Array(24).fill(0);
+
+        filteredTransactions.forEach(t => {
+            const hour = new Date(t.date).getHours();
+            salesData[hour] += t.total;
+        });
+        filteredExpenses.forEach(e => {
+            const hour = new Date(e.date).getHours();
+            expensesData[hour] += e.amount;
+        });
+    } else { // monthly
+        const [year, month] = selectedMonth.split('-').map(Number);
+        const daysInMonth = new Date(year, month, 0).getDate();
+        labels = Array.from({ length: daysInMonth }, (_, i) => (i + 1).toString());
+        salesData = Array(daysInMonth).fill(0);
+        expensesData = Array(daysInMonth).fill(0);
+
+        filteredTransactions.forEach(t => {
+            const day = new Date(t.date).getDate();
+            salesData[day - 1] += t.total;
+        });
+        filteredExpenses.forEach(e => {
+            const day = new Date(e.date).getDate();
+            expensesData[day - 1] += e.amount;
+        });
+    }
+
+    chartInstanceRef.current = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: 'Omzet',
+                    data: salesData,
+                    borderColor: 'rgb(180, 83, 9)',
+                    backgroundColor: 'rgba(180, 83, 9, 0.2)',
+                    fill: true,
+                    tension: 0.4,
+                },
+                {
+                    label: 'Pengeluaran',
+                    data: expensesData,
+                    borderColor: 'rgb(107, 114, 128)',
+                    backgroundColor: 'rgba(107, 114, 128, 0.2)',
+                    fill: true,
+                    tension: 0.4,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: (value: any) => 'Rp ' + value.toLocaleString('id-ID')
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                tooltip: {
+                    callbacks: {
+                        label: (context: any) => {
+                           let label = context.dataset.label || '';
+                           if (label) {
+                               label += ': ';
+                           }
+                           if (context.parsed.y !== null) {
+                               label += 'Rp ' + context.parsed.y.toLocaleString('id-ID');
+                           }
+                           return label;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Cleanup on component unmount
+    return () => {
+        if (chartInstanceRef.current) {
+            chartInstanceRef.current.destroy();
+        }
+    };
+  }, [viewMode, filteredTransactions, filteredExpenses, selectedMonth]);
 
   return (
     <div className="p-6">
@@ -108,29 +224,40 @@ const ReportsView: React.FC<ReportsViewProps> = ({ transactions, products, expen
       )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard title="Total Omzet" value={`Rp ${totalRevenue.toLocaleString('id-ID')}`} />
         <StatCard title="Total Pengeluaran" value={`Rp ${totalExpenses.toLocaleString('id-ID')}`} />
         <StatCard title="Laba Bersih" value={`Rp ${netProfit.toLocaleString('id-ID')}`} />
         <StatCard title="Jumlah Transaksi" value={totalTransactions} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-xl shadow-md">
-            <h2 className="text-xl font-bold text-amber-900 mb-4">Produk Terlaris</h2>
-            {bestSellingProducts.length > 0 ? (
-                <ul className="space-y-3">
-                    {bestSellingProducts.map((item, index) => (
-                        <li key={index} className="flex justify-between items-center p-2 rounded-md even:bg-amber-50">
-                            <span className="font-medium text-gray-700">{item.name} ({item.size})</span>
-                            <span className="font-bold text-amber-800">{item.quantity} pcs</span>
-                        </li>
-                    ))}
-                </ul>
-            ) : (
-                <p className="text-gray-500">Tidak ada data penjualan untuk periode ini.</p>
-            )}
-        </div>
+      {/* Chart Section */}
+      <div className="bg-white p-6 rounded-xl shadow-md mb-8">
+          <h2 className="text-xl font-bold text-amber-900 mb-4">Grafik Pertumbuhan</h2>
+          <div className="relative h-80">
+            <canvas ref={chartRef}></canvas>
+          </div>
+      </div>
+
+
+      <div className={`grid grid-cols-1 ${viewMode === 'daily' ? 'lg:grid-cols-2' : ''} gap-6`}>
+        {viewMode === 'daily' && (
+            <div className="bg-white p-6 rounded-xl shadow-md">
+                <h2 className="text-xl font-bold text-amber-900 mb-4">Produk Terlaris</h2>
+                {bestSellingProducts.length > 0 ? (
+                    <ul className="space-y-3">
+                        {bestSellingProducts.map((item, index) => (
+                            <li key={index} className="flex justify-between items-center p-2 rounded-md even:bg-amber-50">
+                                <span className="font-medium text-gray-700">{item.name} ({item.size})</span>
+                                <span className="font-bold text-amber-800">{item.quantity} pcs</span>
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <p className="text-gray-500">Tidak ada data penjualan untuk periode ini.</p>
+                )}
+            </div>
+        )}
         <div className="bg-white p-6 rounded-xl shadow-md">
             <h2 className="text-xl font-bold text-amber-900 mb-4">Daftar Transaksi</h2>
             <div className="overflow-y-auto h-64">

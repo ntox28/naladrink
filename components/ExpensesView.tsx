@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Expense, ExpenseCategory } from '../types';
 import { PlusIcon, EditIcon, TrashIcon, CloseIcon } from './Icons';
 
@@ -96,6 +96,16 @@ interface ExpensesViewProps {
 const ExpensesView: React.FC<ExpensesViewProps> = ({ expenses, onSaveExpense, onDeleteExpense }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expenseToEdit, setExpenseToEdit] = useState<Expense | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 15;
+
+  const totalPages = useMemo(() => Math.ceil(expenses.length / itemsPerPage), [expenses.length]);
+  
+  const paginatedExpenses = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return expenses.slice(startIndex, endIndex);
+  }, [expenses, currentPage]);
 
   const handleOpenModal = (expense: Expense | null = null) => {
     setExpenseToEdit(expense);
@@ -107,7 +117,6 @@ const ExpensesView: React.FC<ExpensesViewProps> = ({ expenses, onSaveExpense, on
     setExpenseToEdit(null);
   };
 
-  // FIX: Updated the type of expenseData to match what onSaveExpense prop expects, resolving the type error.
   const handleSaveExpense = async (expenseData: Expense | Omit<Expense, 'id' | 'created_at'>) => {
     const success = await onSaveExpense(expenseData);
     if(success) {
@@ -143,7 +152,7 @@ const ExpensesView: React.FC<ExpensesViewProps> = ({ expenses, onSaveExpense, on
             </tr>
           </thead>
           <tbody>
-            {expenses.map(expense => (
+            {paginatedExpenses.map(expense => (
               <tr key={expense.id} className="bg-white border-b hover:bg-gray-50">
                 <td className="px-6 py-4">{new Date(expense.date).toLocaleDateString('id-ID')}</td>
                 <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
@@ -164,6 +173,31 @@ const ExpensesView: React.FC<ExpensesViewProps> = ({ expenses, onSaveExpense, on
              )}
           </tbody>
         </table>
+        {totalPages > 1 && (
+             <div className="flex justify-between items-center mt-4 p-4 bg-gray-50 rounded-b-lg border-t">
+                <div>
+                    <span className="text-sm text-gray-700">
+                        Halaman <span className="font-semibold">{currentPage}</span> dari <span className="font-semibold">{totalPages}</span>
+                    </span>
+                </div>
+                <div className="flex space-x-2">
+                    <button
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Sebelumnya
+                    </button>
+                    <button
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage >= totalPages}
+                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Berikutnya
+                    </button>
+                </div>
+            </div>
+        )}
       </div>
       
       <ExpenseFormModal 
