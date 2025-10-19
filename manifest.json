@@ -1,0 +1,23 @@
+{
+  "name": "Aplikasi Naladrink",
+  "short_name": "Naladrink",
+  "description": "Nala Pos And Prduction activity",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#9F4508",
+  "icons": [
+    {
+      "src": "https://efuivqjmbichqgsdqxdy.supabase.co/storage/v1/object/public/publik/aladrink.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://efuivqjmbichqgsdqxdy.supabase.co/storage/v1/object/public/publik/aladrink.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
