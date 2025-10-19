@@ -8,13 +8,13 @@
   "theme_color": "#9F4508",
   "icons": [
     {
-      "src": "https://efuivqjmbichqgsdqxdy.supabase.co/storage/v1/object/public/publik/aladrink.png",
+      "src": "https://efuivqjmbichqgsdqxdy.supabase.co/storage/v1/object/public/publik/android-chrome-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "https://efuivqjmbichqgsdqxdy.supabase.co/storage/v1/object/public/publik/aladrink.png",
+      "src": "https://efuivqjmbichqgsdqxdy.supabase.co/storage/v1/object/public/publik/android-chrome-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
